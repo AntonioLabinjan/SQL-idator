@@ -146,10 +146,10 @@
 
         <!-- Display the task/question -->
         {% if tasks %}
-            <div class="question">
-                <p>{{ tasks[0]['task'] }}</p>
-            </div>
-        {% endif %}
+    <div class="question">
+        <p>{{ tasks[0]['task'] }}</p>
+    </div>
+{% endif %}
 
         <!-- Display the schema (tables and columns) -->
         {% if table_info %}
@@ -181,6 +181,12 @@
         <form action="{{ url_for('validate_query') }}" method="POST">
             <label for="query">Enter SQL Query:</label>
             <input type="text" id="query" name="query" required>
+            
+            {% if tasks %}
+                <!-- Include expected result as hidden input -->
+                <input type="hidden" name="expected_result" value="{{ tasks[0]['expected_result'] | join(',') }}">
+            {% endif %}
+            
             <input type="submit" value="Validate Query">
         </form>
 
