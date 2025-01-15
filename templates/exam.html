@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stress Exam</title>
+</head>
+<body>
+    <h1>Stress Exam</h1>
+    <p>Time Remaining: {{ time }} seconds</p>
+    <form action="{{ url_for('submit_answer') }}" method="post">
+        <p>{{ question.task }}</p>
+        <input type="hidden" name="expected_result" value="{{ ','.join(question.expected_result) }}">
+        <textarea name="query" rows="4" cols="50" placeholder="Write your query here..."></textarea><br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
