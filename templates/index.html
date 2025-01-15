@@ -38,33 +38,33 @@
             text-align: center;
         }
 
-        .schema {
+        .schema, .info-section {
             margin-top: 30px;
             font-size: 1.2em;
             color: #333;
         }
 
-        .schema table {
+        .schema table, .info-section table {
             width: 100%;
             margin-top: 20px;
             border-collapse: collapse;
         }
 
-        .schema th, .schema td {
+        .schema th, .schema td, .info-section th, .info-section td {
             padding: 10px;
             text-align: left;
             border: 1px solid #ddd;
         }
 
-        .schema th {
+        .schema th, .info-section th {
             background-color: #f4f7fc;
         }
 
-        .schema tr:nth-child(even) {
+        .schema tr:nth-child(even), .info-section tr:nth-child(even) {
             background-color: #f9f9f9;
         }
 
-        .schema tr:hover {
+        .schema tr:hover, .info-section tr:hover {
             background-color: #f1f1f1;
         }
 
@@ -80,7 +80,7 @@
             margin-bottom: 10px;
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             padding: 10px;
             width: 80%;
             max-width: 500px;
@@ -123,11 +123,44 @@
                 width: 90%;
             }
 
-            input[type="text"] {
+            input[type="text"], input[type="number"] {
                 width: 100%;
             }
         }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Start the timer when the form is submitted
+            document.querySelector("form#start-exam-form").addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent form submission
+    
+                const duration = 40;
+                if (duration && duration > 0) {
+                    startTimer(duration);  // Start the timer
+                }
+
+                // Show the query form after the timer starts
+                document.getElementById("query-form-container").style.display = "block";
+            });
+        });
+    
+        function startTimer(duration) {
+            const timerDisplay = document.getElementById("timer-display");
+            let timeRemaining = duration;
+    
+            // Update the timer every second
+            const interval = setInterval(() => {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    
+                if (--timeRemaining < 0) {
+                    clearInterval(interval); // Stop the timer
+                    alert("Time is up!");
+                }
+            }, 1000);
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -146,10 +179,10 @@
 
         <!-- Display the task/question -->
         {% if tasks %}
-    <div class="question">
-        <p>{{ tasks[0]['task'] }}</p>
-    </div>
-{% endif %}
+            <div class="question">
+                <p>{{ tasks[0]['task'] }}</p>
+            </div>
+        {% endif %}
 
         <!-- Display the schema (tables and columns) -->
         {% if table_info %}
@@ -177,18 +210,32 @@
             </div>
         {% endif %}
 
-        <!-- Form for SQL query -->
-        <form action="{{ url_for('validate_query') }}" method="POST">
-            <label for="query">Enter SQL Query:</label>
-            <input type="text" id="query" name="query" required>
-            
-            {% if tasks %}
-                <!-- Include expected result as hidden input -->
-                <input type="hidden" name="expected_result" value="{{ tasks[0]['expected_result'] | join(',') }}">
-            {% endif %}
-            
-            <input type="submit" value="Validate Query">
+        <!-- Information Section -->
+        <div class="info-section">
+            <h2>Information</h2>
+            <p><strong>Correct Answers:</strong> {{ session.get('correct_answers', 0) }}</p>
+            <p><strong>Timer:</strong> <span id="timer-display">0:00</span></p>
+        </div>
+
+        <!-- Start Exam Button -->
+        <form id="start-exam-form" method="POST">
+            <input type="submit" value="Next Question">
         </form>
+
+        <!-- Query Form (Initially Hidden) -->
+        <div id="query-form-container" style="display: none;">
+            <form action="{{ url_for('validate_query') }}" method="POST">
+                <label for="query">Enter SQL Query:</label>
+                <input type="text" id="query" name="query" required>
+                
+                {% if tasks %}
+                    <!-- Include expected result as hidden input -->
+                    <input type="hidden" name="expected_result" value="{{ tasks[0]['expected_result'] | join(',') }}">
+                {% endif %}
+                
+                <input type="submit" value="Validate Query">
+            </form>
+        </div>
 
         {% if query %}
             <h2>Submitted Query:</h2>
