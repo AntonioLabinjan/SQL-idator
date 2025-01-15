@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
+import random
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # For flash messages
@@ -45,15 +46,35 @@ def index():
         {
             "task": "Write a query to get all book names.",
             "expected_result": [
-                ("Harry Potter and the Sorcerer's Stone", 1, 'Fantasy', 1997),
-                ('1984', 2, 'Dystopian', 1949),
-                ('The Hobbit', 3, 'Fantasy', 1937),
-                ('Pride and Prejudice', 4, 'Romance', 1813)
+                "Harry Potter and the Sorcerer's Stone",
+                '1984',
+                'The Hobbit',
+                'Pride and Prejudice'
             ]
+        },
+        {
+            "task": "Write a query to get all authors born after 1950.",
+            "expected_result": ['J.K. Rowling']
+        },
+        {
+            "task": "Write a query to find all genres in the books table.",
+            "expected_result": ['Fantasy', 'Dystopian', 'Romance']
+        },
+        {
+            "task": "Write a query to find books published before 1950.",
+            "expected_result": ['1984', 'The Hobbit', 'Pride and Prejudice']
+        },
+        {
+            "task": "Write a query to get the total number of books.",
+            "expected_result": [4]
         }
     ]
 
-    return render_template('index.html', tables=tables, table_info=table_info, tasks=tasks)
+    # Select a random task
+    selected_task = random.choice(tasks)
+
+  #  return render_template('index.html', tables=tables, table_info=table_info, task=selected_task)
+    return render_template('index.html', tables=tables, table_info=table_info, tasks=[selected_task])
 
 
 @app.route('/query', methods=['POST'])
@@ -76,14 +97,7 @@ def query():
 @app.route('/validate_query', methods=['POST'])
 def validate_query():
     query = request.form['query']
-
-    # Hardcoded expected result
-    expected_result = [
-        "Harry Potter and the Sorcerer's Stone",
-        '1984',
-        'The Hobbit',
-        'Pride and Prejudice'
-    ]
+    expected_result = request.form['expected_result'].split(',')  # Convert back to list
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -91,27 +105,22 @@ def validate_query():
     try:
         cursor.execute(query)
         result = cursor.fetchall()
-        columns = [desc[0] for desc in cursor.description]
         conn.close()
 
         # Extract the first element from each row (assuming a single column in the result)
-        result_cleaned = [row[0] for row in result]
-
-        # Debugging print statements
-        print(f"Expected Result: {expected_result}")
-        print(f"Actual Result: {result_cleaned}")
+        result_cleaned = [str(row[0]) for row in result]
 
         if sorted(result_cleaned) == sorted(expected_result):
             flash("Correct!", 'success')
         else:
             flash(f"Incorrect. Expected: {expected_result}, Got: {result_cleaned}", 'danger')
 
-        return render_template('index.html', result=result, columns=columns, query=query)
+        return redirect(url_for('index'))
 
     except Exception as e:
         conn.close()
         flash(f"Error executing query: {e}", 'danger')
-        return render_template('index.html', query=query)
+        return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
